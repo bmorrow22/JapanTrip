@@ -4,7 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Japan Itinerary</title>
-  <!-- Tailwind CSS and Google Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -13,24 +12,17 @@
     body {
       font-family: 'Inter', sans-serif;
       background-color: #F8F9FA;
-      /* Use a CSS grid to explicitly define the page layout */
-      display: grid;
-      grid-template-columns: 1fr; /* Default to single column for mobile */
-      gap: 1.5rem; /* Equivalent to p-6 */
       padding: 1.5rem;
     }
 
     /* Set up a two-column layout for screens wider than 768px (md breakpoint) */
     @media (min-width: 768px) {
       body {
+        display: grid;
         grid-template-columns: 18rem 1fr; /* 18rem sidebar, rest for main content */
-        grid-template-areas:
-          "nav main";
-        /* Remove gap for a cleaner, unified look */
-        gap: 0;
+        gap: 1.5rem;
       }
       aside {
-        grid-area: nav;
         position: sticky; /* Keep the navigation fixed on the side */
         top: 1.5rem;
         align-self: start;
@@ -45,20 +37,33 @@
       font-family: 'Merriweather', serif;
     }
     
-    /* Styles for the horizontal, "Excel-style" grid view */
+    /* Styles for the responsive itinerary grid view */
     .itinerary-grid {
       display: flex;
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch; /* for smooth scrolling on iOS */
+      flex-direction: column; /* Default to a single column for mobile */
       gap: 1rem;
     }
     .itinerary-grid .segment-card {
-        flex: 0 0 20rem; /* Fixed width for each card */
-        min-height: 20rem; /* Ensures all cards have a consistent height */
-        margin-bottom: 0; /* Remove mb from cards in grid view */
+        width: 100%; /* Full width for cards on mobile */
+        min-height: auto;
+        margin-bottom: 0;
         border: 1px solid #E5E7EB; /* Subtle border for the "cell" look */
     }
+
+    /* Media query for desktop-style horizontal scrolling */
+    @media (min-width: 768px) {
+      .itinerary-grid {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      .itinerary-grid .segment-card {
+        flex: 0 0 20rem; /* Fixed width for each card on desktop */
+        min-height: 20rem; /* Consistent height */
+      }
+    }
+    
     /* Hide scrollbar but keep functionality */
     .itinerary-grid::-webkit-scrollbar {
         display: none;
@@ -69,7 +74,6 @@
   </style>
 </head>
 <body>
-  <!-- Side Navigation Bar -->
   <aside class="bg-white rounded-xl p-6 mb-6 md:mb-0">
     <h3 class="text-xl font-bold mb-4 text-gray-800">Itinerary Actions</h3>
     <div class="flex flex-col space-y-2 mb-6">
@@ -90,9 +94,7 @@
     </ul>
   </aside>
 
-  <!-- Main Content Container -->
   <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden main-container">
-    <!-- Header -->
     <header class="bg-indigo-950 text-white py-8 px-6 relative">
       <div class="relative z-10 text-center">
         <h1 class="text-4xl font-extrabold tracking-tight">🇯🇵 Japan Itinerary</h1>
@@ -100,7 +102,6 @@
       </div>
     </header>
     
-    <!-- Main Content Sections -->
     <main id="daySections"></main>
   </div>
 
@@ -165,7 +166,6 @@
         ["Hotel → Tea Ceremony", "~20 min", "¥1,000–¥2,000", "~$7–$13", "Visit Maikoya or Rokujuan", "🍵 Cultural Experience", "Maikoya or Rokujuan", "—", "Recommended", "Taxi/Local"],
         ["Tea Ceremony → Imperial Palace", "~20 min", "¥500–¥1,000", "~$3–$7", "Historical tour of Imperial Palace & Nijo Castle", "🏯 Historic Tour", "Imperial Palace & Nijo Castle", "—", "Not Set", "Local"],
         ["Nijo → Fushimi Inari", "~30 min", "¥300–¥500", "~$2–$4", "Shrine revisit", "⛩️ Spiritual Path", "Fushimi Inari", "—", "Not Set", "Local Train"],
-        ["Fushimi → Ninen-zaka", "~20 min", "¥300–¥500", "~$2–$4", "Lunch at market", "🍱 Street Food", "Ninen-zaka", "—", "Not Set", "Local Train"],
         ["Ninen-zaka → Hotel Mitsui", "~20 min", "¥500–¥1,000", "~$3–$7", "Afternoon massage", "💆‍♀️ Relaxation", "—", "Not Set", "Taxi"],
         ["Hotel Mitsui → Restaurant", "~1 min", "Free", "Free", "Dinner at hotel", "🍽️ Fine Dining", "Hotel Restaurant", "—", "Not Set", "On-site"]
       ],
@@ -231,13 +231,11 @@
 
       return `
         <div class="bg-white p-4 rounded-lg shadow-sm mb-4 last:mb-0 segment-card flex flex-col justify-between">
-          <!-- Main Title/Activity & Segment Details -->
           <div class="mb-2">
             <h4 class="text-lg font-bold text-gray-900">${segmentTitle}</h4>
             <p class="text-sm text-gray-500">${segmentDetails}</p>
           </div>
           
-          <!-- Key Details Grid -->
           <div class="grid grid-cols-2 gap-y-1 gap-x-4 text-sm text-gray-600 mb-2">
             ${travelDetailsHTML}
             <div>
@@ -254,7 +252,6 @@
             </div>
           </div>
           
-          <!-- Details and Notes -->
           <div class="mt-2 text-sm text-gray-700">
             <span class="font-semibold text-gray-800">Details:</span> ${details}
           </div>
@@ -262,7 +259,6 @@
             <span class="font-semibold text-gray-800">Notes:</span> ${notes}
           </div>
 
-          <!-- Status Badge -->
           <div class="mt-4">
             <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${getStatusClass(status)}">${status}</span>
           </div>
@@ -274,7 +270,7 @@
       const content = dayContainer.querySelector('.itinerary-content');
       const toggleIcon = dayContainer.querySelector('.toggle-icon');
       
-      if (content.style.display === 'none' || content.style.display === '') {
+      if (content.style.display === 'none') {
         content.style.display = 'flex';
         toggleIcon.textContent = '▼';
       } else {
