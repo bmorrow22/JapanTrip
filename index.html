@@ -12,27 +12,52 @@
     body {
       font-family: 'Inter', sans-serif;
       background-color: #F8F9FA;
-      padding: 1.5rem;
     }
 
-    /* Set up a two-column layout for screens wider than 768px (md breakpoint) */
-    @media (min-width: 768px) {
-      body {
-        display: grid;
-        grid-template-columns: 18rem 1fr; /* 18rem sidebar, rest for main content */
-        gap: 1.5rem;
-      }
-      aside {
-        position: sticky; /* Keep the navigation fixed on the side */
-        top: 1.5rem;
-        align-self: start;
-        height: fit-content; /* Ensure the height doesn't extend unnecessarily */
-      }
-      .main-container {
-        grid-area: main;
-      }
+    /* Styles for a fixed header and main content offset */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      z-index: 20;
     }
-    
+    .main-container {
+      padding-top: 10rem; /* Offset for the fixed header height */
+    }
+
+    /* Styles for floating hamburger menu */
+    .floating-menu {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 30;
+    }
+    .floating-menu-container {
+      transform: translateY(100%);
+      transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
+      opacity: 0;
+      pointer-events: none;
+      
+    }
+    .floating-menu-container.active {
+      transform: translateY(0);
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Styles for the scrollable day filter */
+    .day-filter-list {
+      max-height: 200px; /* Adjust as needed */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none;  /* IE and Edge */
+    }
+    .day-filter-list::-webkit-scrollbar {
+        display: none; /* Chrome, Safari, Opera */
+    }
+
     h1, h2 {
       font-family: 'Merriweather', serif;
     }
@@ -71,82 +96,41 @@
     .toggle-icon {
       transition: transform 0.3s ease-in-out;
     }
-    
-    /* New styles for the mobile menu */
-    .mobile-menu-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background-color: rgba(0, 0, 0, 0.5);
-      z-index: 40;
-      transition: opacity 0.3s ease-in-out;
-    }
-
-    .mobile-aside {
-      position: fixed;
-      top: 0;
-      right: 0;
-      height: 100%;
-      z-index: 50;
-      transform: translateX(100%);
-      transition: transform 0.3s ease-in-out;
-    }
-
-    .mobile-aside.active {
-      transform: translateX(0);
-    }
   </style>
 </head>
 <body>
-  <!-- Hamburger menu button for mobile -->
-  <button id="menuButton" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 rounded-full shadow-lg md:hidden">
-    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
-    </svg>
-  </button>
+  <!-- Fixed Header -->
+  <header class="fixed-header bg-indigo-950 text-white py-8 px-6 text-center">
+    <h1 class="text-4xl font-extrabold tracking-tight">🇯🇵 Japan Itinerary</h1>
+    <p class="text-sm mt-2 opacity-80 font-semibold">August 29 – September 8, 2025</p>
+  </header>
   
-  <!-- Mobile Menu Overlay -->
-  <div id="mobileMenuOverlay" class="hidden mobile-menu-overlay"></div>
-
-  <!-- Aside/Sidebar for filtering and navigation -->
-  <aside id="itineraryMenu" class="bg-white rounded-xl p-6 md:mb-0 mobile-aside md:relative md:block md:w-auto md:h-auto md:translate-x-0">
-    <div class="flex justify-end md:hidden mb-4">
-      <button id="closeMenuButton" class="p-2 text-gray-500 hover:text-gray-700">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
-      </button>
-    </div>
-    <h3 class="text-xl font-bold mb-4 text-gray-800">Itinerary Actions</h3>
-    <div class="flex flex-col space-y-2 mb-6">
-      <button id="expandAll" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden main-container mx-auto">
+    <main id="daySections"></main>
+  </div>
+  
+  <!-- Floating Menu -->
+  <div class="floating-menu">
+    <div id="floatingMenuContainer" class="absolute bottom-16 right-0 flex flex-col items-end space-y-4 floating-menu-container bg-white p-4 rounded-xl shadow-lg">
+      <h3 class="text-xl font-bold text-gray-800">Itinerary Actions</h3>
+      <button id="expandAll" class="w-full text-left bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
         Expand All
       </button>
-      <button id="collapseAll" class="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
-      Collapse All
+      <button id="collapseAll" class="w-full text-left bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
+        Collapse All
       </button>
-    </div>
-    <h3 class="text-xl font-bold mb-4 text-gray-800">View Days</h3>
-    <ul id="dayNav" class="space-y-2">
-      <li>
-        <button id="showAll" class="w-full text-left px-4 py-2 rounded-lg text-gray-800 bg-gray-200 font-bold hover:bg-gray-300 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
-          Show All
-        </button>
-      </li>
-    </ul>
-  </aside>
-
-  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden main-container">
-    <header class="bg-indigo-950 text-white py-8 px-6 relative">
-      <div class="relative z-10 text-center">
-        <h1 class="text-4xl font-extrabold tracking-tight">🇯🇵 Japan Itinerary</h1>
-        <p class="text-sm mt-2 opacity-80 font-semibold">August 29 – September 8, 2025</p>
+      <div class="w-full">
+        <h3 class="text-xl font-bold mt-4 mb-2 text-gray-800">Jump to Day</h3>
+        <ul id="dayFilterContainer" class="day-filter-list space-y-2">
+          <!-- Day filter buttons will be dynamically added here -->
+        </ul>
       </div>
-    </header>
-    
-    <main id="daySections"></main>
+    </div>
+    <button id="menuButton" class="p-4 bg-gray-800 rounded-full shadow-lg">
+      <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+      </svg>
+    </button>
   </div>
 
   <script>
@@ -235,17 +219,14 @@
     };
 
     const sectionsContainer = document.getElementById("daySections");
-    const dayNavContainer = document.getElementById("dayNav");
     const expandAllButton = document.getElementById("expandAll");
     const collapseAllButton = document.getElementById("collapseAll");
-    const showAllButton = document.getElementById("showAll");
     
-    // New elements for mobile menu
+    // New elements for the floating menu
     const menuButton = document.getElementById("menuButton");
-    const closeMenuButton = document.getElementById("closeMenuButton");
-    const itineraryMenu = document.getElementById("itineraryMenu");
-    const mobileMenuOverlay = document.getElementById("mobileMenuOverlay");
-
+    const floatingMenuContainer = document.getElementById("floatingMenuContainer");
+    const dayFilterContainer = document.getElementById("dayFilterContainer");
+    
     const getStatusClass = (status) => {
       switch (status) {
         case 'Booked': return 'bg-green-100 text-green-700';
@@ -320,7 +301,7 @@
       const content = dayContainer.querySelector('.itinerary-content');
       const toggleIcon = dayContainer.querySelector('.toggle-icon');
       
-      if (content.style.display === 'none') {
+      if (content.style.display === 'none' || content.style.display === '') {
         content.style.display = 'flex';
         toggleIcon.textContent = '▼';
       } else {
@@ -329,7 +310,20 @@
       }
     };
     
+    const showAllDays = () => {
+      document.querySelectorAll('.day-section').forEach(section => {
+        section.style.display = '';
+      });
+    }
+
     const renderItinerary = () => {
+      // Add the "Show All Days" button
+      const showAllItem = document.createElement("li");
+      showAllItem.innerHTML = `
+        <button id="showAllDaysBtn" class="day-filter w-full text-left px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors duration-200">Show All Days</button>
+      `;
+      dayFilterContainer.appendChild(showAllItem);
+
       Object.entries(itinerary).forEach(([day, segments], index) => {
         const dayId = day.replace(/[\s/]/g, '_');
         const dayContainer = document.createElement("div");
@@ -390,11 +384,12 @@
 
         sectionsContainer.appendChild(dayContainer);
 
+        // Create day filter button for the floating menu
         const navItem = document.createElement("li");
         navItem.innerHTML = `
           <button class="day-filter w-full text-left px-4 py-2 rounded-lg text-gray-600 hover:bg-gray-200 transition-colors duration-200" data-day-id="${dayId}">${day}</button>
         `;
-        dayNavContainer.appendChild(navItem);
+        dayFilterContainer.appendChild(navItem);
       });
     };
     
@@ -413,44 +408,45 @@
       });
     });
     
-    showAllButton.addEventListener('click', () => {
-      document.querySelectorAll('.day-section').forEach(section => {
-        section.style.display = '';
-      });
-      // Close the mobile menu after clicking "Show All"
-      closeMobileMenu();
+    // Day filter functionality
+    dayFilterContainer.addEventListener('click', (e) => {
+      const dayFilterBtn = e.target.closest('.day-filter');
+      if (!dayFilterBtn) return; // Ignore clicks not on a button
+
+      const dayIdToFilter = dayFilterBtn.dataset.dayId;
+      
+      // If the "Show All Days" button is clicked
+      if (dayIdToFilter === undefined) {
+        showAllDays();
+      } else {
+        // Hide all sections
+        document.querySelectorAll('.day-section').forEach(section => {
+          section.style.display = 'none';
+        });
+        
+        // Show only the selected section
+        const targetSection = document.getElementById(dayIdToFilter);
+        if (targetSection) {
+          targetSection.style.display = '';
+        }
+      }
+      
+      // Close the floating menu
+      floatingMenuContainer.classList.remove('active');
     });
 
-    dayNavContainer.addEventListener('click', (e) => {
-      const dayFilterBtn = e.target.closest('.day-filter');
-      if (dayFilterBtn) {
-        const dayIdToFilter = dayFilterBtn.dataset.dayId;
-        document.querySelectorAll('.day-section').forEach(section => {
-          if (section.id === dayIdToFilter) {
-            section.style.display = '';
-          } else {
-            section.style.display = 'none';
-          }
-        });
-        // Close the mobile menu after filtering
-        closeMobileMenu();
+    // Floating menu functions
+    menuButton.addEventListener('click', () => {
+      floatingMenuContainer.classList.toggle('active');
+    });
+
+    // Close menu if user clicks anywhere else
+    document.addEventListener('click', (e) => {
+      const isClickInsideMenu = floatingMenuContainer.contains(e.target) || menuButton.contains(e.target);
+      if (!isClickInsideMenu && floatingMenuContainer.classList.contains('active')) {
+        floatingMenuContainer.classList.remove('active');
       }
     });
-
-    // Mobile menu functions
-    const openMobileMenu = () => {
-      itineraryMenu.classList.add('active');
-      mobileMenuOverlay.classList.remove('hidden');
-    };
-
-    const closeMobileMenu = () => {
-      itineraryMenu.classList.remove('active');
-      mobileMenuOverlay.classList.add('hidden');
-    };
-
-    menuButton.addEventListener('click', openMobileMenu);
-    closeMenuButton.addEventListener('click', closeMobileMenu);
-    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
 
     document.addEventListener('DOMContentLoaded', renderItinerary);
   </script>
