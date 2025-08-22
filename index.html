@@ -26,26 +26,28 @@
       padding-top: 10rem; /* Offset for the fixed header height */
     }
 
-    /* Styles for floating hamburger menu */
+    /* Styles for the draggable floating menu */
     .floating-menu {
       position: fixed;
-      bottom: 2rem;
-      right: 2rem;
       z-index: 30;
+      cursor: grab; /* Set cursor to grab to indicate it's draggable */
+    }
+    .floating-menu.dragging {
+        cursor: grabbing;
     }
     .floating-menu-container {
-      transform: translateY(100%);
+      transform: scale(0);
+      transform-origin: bottom right;
       transition: transform 0.3s ease-in-out, opacity 0.3s ease-in-out;
       opacity: 0;
       pointer-events: none;
-      
     }
     .floating-menu-container.active {
-      transform: translateY(0);
+      transform: scale(1);
       opacity: 1;
       pointer-events: auto;
     }
-
+    
     /* Styles for the scrollable day filter */
     .day-filter-list {
       max-height: 200px; /* Adjust as needed */
@@ -62,43 +64,42 @@
       font-family: 'Merriweather', serif;
     }
     
-    /* Styles for the responsive itinerary grid view */
+    /* Responsive grid layout for itinerary segments on desktop */
     .itinerary-grid {
-      display: flex;
-      flex-direction: column; /* Default to a single column for mobile */
-      gap: 1rem;
+      display: grid;
+      gap: 1.5rem; /* Space between cards */
+      
+      /* Default to a single column for mobile */
+      grid-template-columns: 1fr;
     }
-    .itinerary-grid .segment-card {
-        width: 100%; /* Full width for cards on mobile */
-        min-height: auto;
-        margin-bottom: 0;
-        border: 1px solid #E5E7EB; /* Subtle border for the "cell" look */
-    }
-
-    /* Media query for desktop-style horizontal scrolling */
+    
+    /* Media query for tablet and desktop view */
     @media (min-width: 768px) {
       .itinerary-grid {
-        flex-direction: row;
-        flex-wrap: nowrap;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      .itinerary-grid .segment-card {
-        flex: 0 0 20rem; /* Fixed width for each card on desktop */
-        min-height: 20rem; /* Consistent height */
+        /* Use auto-fit to create a flexible number of columns */
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
       }
     }
     
-    /* Hide scrollbar but keep functionality */
-    .itinerary-grid::-webkit-scrollbar {
-        display: none;
+    .segment-card {
+        border: 1px solid #E5E7EB; /* Subtle border for the "cell" look */
+        height: 100%;
     }
+    
     .toggle-icon {
       transition: transform 0.3s ease-in-out;
     }
+    
+    /* Styles to prevent text selection while dragging */
+    .no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
   </style>
 </head>
-<body>
+<body class="no-select">
   <!-- Fixed Header -->
   <header class="fixed-header bg-indigo-950 text-white py-8 px-6 text-center">
     <h1 class="text-4xl font-extrabold tracking-tight">🇯🇵 Japan Itinerary</h1>
@@ -110,7 +111,7 @@
   </div>
   
   <!-- Floating Menu -->
-  <div class="floating-menu">
+  <div id="floatingMenu" class="floating-menu w-fit h-fit" style="right: 2rem; bottom: 2rem;">
     <div id="floatingMenuContainer" class="absolute bottom-16 right-0 flex flex-col items-end space-y-4 floating-menu-container bg-white p-4 rounded-xl shadow-lg">
       <h3 class="text-xl font-bold text-gray-800">Itinerary Actions</h3>
       <button id="expandAll" class="w-full text-left bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
@@ -223,6 +224,7 @@
     const collapseAllButton = document.getElementById("collapseAll");
     
     // New elements for the floating menu
+    const floatingMenu = document.getElementById("floatingMenu");
     const menuButton = document.getElementById("menuButton");
     const floatingMenuContainer = document.getElementById("floatingMenuContainer");
     const dayFilterContainer = document.getElementById("dayFilterContainer");
@@ -236,12 +238,13 @@
       }
     };
 
-    const createSegmentCard = (segment) => {
+    const createSegmentCard = (segment, index) => {
       const segmentTitle = segment[5];
       const segmentDetails = segment[0];
       const details = segment[4];
       const notes = segment[7];
       const status = segment[8];
+      const eventNumber = index + 1;
 
       const travelParts = segmentDetails.includes('→') ? segmentDetails.split(' → ') : [null, null];
       const startLocation = travelParts[0];
@@ -261,9 +264,14 @@
       `;
 
       return `
-        <div class="bg-white p-4 rounded-lg shadow-sm mb-4 last:mb-0 segment-card flex flex-col justify-between">
+        <div class="bg-white p-4 rounded-lg shadow-sm segment-card relative flex flex-col justify-between">
+          <!-- Event Number Badge -->
+          <div class="absolute top-2 left-2 bg-blue-500 text-white font-bold text-xs rounded-full h-6 w-6 flex items-center justify-center">
+            ${eventNumber}
+          </div>
+          
           <div class="mb-2">
-            <h4 class="text-lg font-bold text-gray-900">${segmentTitle}</h4>
+            <h4 class="text-lg font-bold text-gray-900 mt-4">${segmentTitle}</h4>
             <p class="text-sm text-gray-500">${segmentDetails}</p>
           </div>
           
@@ -301,13 +309,9 @@
       const content = dayContainer.querySelector('.itinerary-content');
       const toggleIcon = dayContainer.querySelector('.toggle-icon');
       
-      if (content.style.display === 'none' || content.style.display === '') {
-        content.style.display = 'flex';
-        toggleIcon.textContent = '▼';
-      } else {
-        content.style.display = 'none';
-        toggleIcon.textContent = '▶';
-      }
+      const isVisible = content.style.display !== 'none';
+      content.style.display = isVisible ? 'none' : 'grid';
+      toggleIcon.textContent = isVisible ? '▶' : '▼';
     };
     
     const showAllDays = () => {
@@ -376,9 +380,9 @@
 
         const content = document.createElement("div");
         content.className = "px-4 py-8 itinerary-content itinerary-grid";
-        content.style.display = 'flex'; // Ensure initial state is visible
+        content.style.display = 'grid'; // Ensure initial state is visible
         
-        const cardHTML = segments.map(createSegmentCard).join('');
+        const cardHTML = segments.map((segment, index) => createSegmentCard(segment, index)).join('');
         content.innerHTML = cardHTML;
         dayContainer.appendChild(content);
 
@@ -396,7 +400,7 @@
     // Event listeners for itinerary actions
     expandAllButton.addEventListener('click', () => {
       document.querySelectorAll('.itinerary-content').forEach(content => {
-        content.style.display = 'flex';
+        content.style.display = 'grid';
         content.previousElementSibling.querySelector('.toggle-icon').textContent = '▼';
       });
     });
@@ -436,19 +440,86 @@
     });
 
     // Floating menu functions
-    menuButton.addEventListener('click', () => {
+    menuButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Prevent this click from closing the menu immediately
       floatingMenuContainer.classList.toggle('active');
     });
 
     // Close menu if user clicks anywhere else
     document.addEventListener('click', (e) => {
-      const isClickInsideMenu = floatingMenuContainer.contains(e.target) || menuButton.contains(e.target);
+      const isClickInsideMenu = floatingMenuContainer.contains(e.target) || floatingMenu.contains(e.target);
       if (!isClickInsideMenu && floatingMenuContainer.classList.contains('active')) {
         floatingMenuContainer.classList.remove('active');
       }
     });
+    
+    // --- Draggable Menu Functionality ---
+    let isDragging = false;
+    let offsetX = 0;
+    let offsetY = 0;
 
-    document.addEventListener('DOMContentLoaded', renderItinerary);
+    const onPointerDown = (e) => {
+      isDragging = true;
+      floatingMenu.classList.add('dragging');
+      // Calculate offset from click point to element's top-left corner
+      offsetX = e.clientX - floatingMenu.getBoundingClientRect().left;
+      offsetY = e.clientY - floatingMenu.getBoundingClientRect().top;
+      floatingMenu.style.transition = 'none'; // Disable transition while dragging
+    };
+
+    const onPointerMove = (e) => {
+      if (!isDragging) return;
+      
+      // Calculate new position
+      const newX = e.clientX - offsetX;
+      const newY = e.clientY - offsetY;
+      
+      // Calculate boundaries
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+      const menuWidth = floatingMenu.offsetWidth;
+      const menuHeight = floatingMenu.offsetHeight;
+
+      // Apply boundaries to new position
+      const clampedX = Math.min(Math.max(newX, 0), viewportWidth - menuWidth);
+      const clampedY = Math.min(Math.max(newY, 0), viewportHeight - menuHeight);
+
+      // Apply new position
+      floatingMenu.style.left = `${clampedX}px`;
+      floatingMenu.style.top = `${clampedY}px`;
+      floatingMenu.style.right = ''; // Clear right/bottom for a fixed position
+      floatingMenu.style.bottom = '';
+    };
+
+    const onPointerUp = () => {
+      if (!isDragging) return;
+      isDragging = false;
+      floatingMenu.classList.remove('dragging');
+      floatingMenu.style.transition = 'transform 0.3s ease-in-out';
+    };
+
+    // Attach event listeners for mouse and touch
+    menuButton.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('mousemove', onPointerMove);
+    document.addEventListener('mouseup', onPointerUp);
+
+    menuButton.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        onPointerDown(e.touches[0]);
+      }
+    });
+
+    document.addEventListener('touchmove', (e) => {
+      if (isDragging && e.touches.length === 1) {
+        onPointerMove(e.touches[0]);
+      }
+    });
+
+    document.addEventListener('touchend', onPointerUp);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderItinerary();
+    });
   </script>
 </body>
 </html>
