@@ -71,10 +71,54 @@
     .toggle-icon {
       transition: transform 0.3s ease-in-out;
     }
+    
+    /* New styles for the mobile menu */
+    .mobile-menu-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 40;
+      transition: opacity 0.3s ease-in-out;
+    }
+
+    .mobile-aside {
+      position: fixed;
+      top: 0;
+      right: 0;
+      height: 100%;
+      z-index: 50;
+      transform: translateX(100%);
+      transition: transform 0.3s ease-in-out;
+    }
+
+    .mobile-aside.active {
+      transform: translateX(0);
+    }
   </style>
 </head>
 <body>
-  <aside class="bg-white rounded-xl p-6 mb-6 md:mb-0">
+  <!-- Hamburger menu button for mobile -->
+  <button id="menuButton" class="fixed top-4 left-4 z-50 p-3 bg-blue-600 rounded-full shadow-lg md:hidden">
+    <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+    </svg>
+  </button>
+  
+  <!-- Mobile Menu Overlay -->
+  <div id="mobileMenuOverlay" class="hidden mobile-menu-overlay"></div>
+
+  <!-- Aside/Sidebar for filtering and navigation -->
+  <aside id="itineraryMenu" class="bg-white rounded-xl p-6 md:mb-0 mobile-aside md:relative md:block md:w-auto md:h-auto md:translate-x-0">
+    <div class="flex justify-end md:hidden mb-4">
+      <button id="closeMenuButton" class="p-2 text-gray-500 hover:text-gray-700">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+        </svg>
+      </button>
+    </div>
     <h3 class="text-xl font-bold mb-4 text-gray-800">Itinerary Actions</h3>
     <div class="flex flex-col space-y-2 mb-6">
       <button id="expandAll" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
@@ -195,6 +239,12 @@
     const expandAllButton = document.getElementById("expandAll");
     const collapseAllButton = document.getElementById("collapseAll");
     const showAllButton = document.getElementById("showAll");
+    
+    // New elements for mobile menu
+    const menuButton = document.getElementById("menuButton");
+    const closeMenuButton = document.getElementById("closeMenuButton");
+    const itineraryMenu = document.getElementById("itineraryMenu");
+    const mobileMenuOverlay = document.getElementById("mobileMenuOverlay");
 
     const getStatusClass = (status) => {
       switch (status) {
@@ -348,6 +398,7 @@
       });
     };
     
+    // Event listeners for itinerary actions
     expandAllButton.addEventListener('click', () => {
       document.querySelectorAll('.itinerary-content').forEach(content => {
         content.style.display = 'flex';
@@ -366,6 +417,8 @@
       document.querySelectorAll('.day-section').forEach(section => {
         section.style.display = '';
       });
+      // Close the mobile menu after clicking "Show All"
+      closeMobileMenu();
     });
 
     dayNavContainer.addEventListener('click', (e) => {
@@ -379,8 +432,25 @@
             section.style.display = 'none';
           }
         });
+        // Close the mobile menu after filtering
+        closeMobileMenu();
       }
     });
+
+    // Mobile menu functions
+    const openMobileMenu = () => {
+      itineraryMenu.classList.add('active');
+      mobileMenuOverlay.classList.remove('hidden');
+    };
+
+    const closeMobileMenu = () => {
+      itineraryMenu.classList.remove('active');
+      mobileMenuOverlay.classList.add('hidden');
+    };
+
+    menuButton.addEventListener('click', openMobileMenu);
+    closeMenuButton.addEventListener('click', closeMobileMenu);
+    mobileMenuOverlay.addEventListener('click', closeMobileMenu);
 
     document.addEventListener('DOMContentLoaded', renderItinerary);
   </script>
