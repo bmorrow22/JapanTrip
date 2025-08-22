@@ -13,28 +13,38 @@
     body {
       font-family: 'Inter', sans-serif;
       background-color: #F8F9FA;
-      /* Using CSS Grid for a robust two-column layout on larger screens */
+      /* Use a CSS grid to explicitly define the page layout */
       display: grid;
-      grid-template-columns: 1fr; /* Default to a single column for mobile */
+      grid-template-columns: 1fr; /* Default to single column for mobile */
       gap: 1.5rem; /* Equivalent to p-6 */
-    }
-    
-    /* Apply grid layout for larger screens (md breakpoint and up) */
-    @media (min-width: 768px) {
-      body {
-        grid-template-columns: 18rem 1fr; /* Set a fixed width for the sidebar on desktop */
-        padding: 1.5rem; /* Add padding for desktop view */
-      }
-      aside {
-        position: sticky; /* Keep the sticky behavior on desktop */
-        top: 1.5rem;
-        align-self: start; /* Align to the start of the grid row */
-      }
+      padding: 1.5rem;
     }
 
+    /* Set up a two-column layout for screens wider than 768px (md breakpoint) */
+    @media (min-width: 768px) {
+      body {
+        grid-template-columns: 18rem 1fr; /* 18rem sidebar, rest for main content */
+        grid-template-areas:
+          "nav main";
+        /* Remove gap for a cleaner, unified look */
+        gap: 0;
+      }
+      aside {
+        grid-area: nav;
+        position: sticky; /* Keep the navigation fixed on the side */
+        top: 1.5rem;
+        align-self: start;
+        height: fit-content; /* Ensure the height doesn't extend unnecessarily */
+      }
+      .main-container {
+        grid-area: main;
+      }
+    }
+    
     h1, h2 {
       font-family: 'Merriweather', serif;
     }
+    
     /* Styles for the horizontal, "Excel-style" grid view */
     .itinerary-grid {
       display: flex;
@@ -60,7 +70,7 @@
 </head>
 <body>
   <!-- Side Navigation Bar -->
-  <aside class="w-full bg-white rounded-xl p-6 mb-6 md:mb-0 md:mr-6">
+  <aside class="bg-white rounded-xl p-6 mb-6 md:mb-0">
     <h3 class="text-xl font-bold mb-4 text-gray-800">Itinerary Actions</h3>
     <div class="flex flex-col space-y-2 mb-6">
       <button id="expandAll" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
@@ -81,7 +91,7 @@
   </aside>
 
   <!-- Main Content Container -->
-  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden">
+  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden main-container">
     <!-- Header -->
     <header class="bg-indigo-950 text-white py-8 px-6 relative">
       <div class="relative z-10 text-center">
@@ -196,19 +206,16 @@
     };
 
     const createSegmentCard = (segment) => {
-      // Create a more professional, hierarchical view for the card
       const segmentTitle = segment[5];
       const segmentDetails = segment[0];
       const details = segment[4];
       const notes = segment[7];
       const status = segment[8];
 
-      // Safely split the travel segment for start/destination, handling cases without "→"
       const travelParts = segmentDetails.includes('→') ? segmentDetails.split(' → ') : [null, null];
       const startLocation = travelParts[0];
       const destinationLocation = travelParts[1];
 
-      // Conditionally render the start/destination info if it exists
       const travelDetailsHTML = startLocation && destinationLocation ? `
         <div>
           <span class="font-semibold text-gray-800">Starting Location:</span> ${startLocation}
@@ -263,12 +270,11 @@
       `;
     };
     
-    // Updated toggleDay function to use direct style manipulation
     const toggleDay = (dayContainer) => {
       const content = dayContainer.querySelector('.itinerary-content');
       const toggleIcon = dayContainer.querySelector('.toggle-icon');
       
-      if (content.style.display === 'none') {
+      if (content.style.display === 'none' || content.style.display === '') {
         content.style.display = 'flex';
         toggleIcon.textContent = '▼';
       } else {
@@ -284,7 +290,6 @@
         dayContainer.className = "mb-6 rounded-xl overflow-hidden bg-white day-section";
         dayContainer.id = dayId;
 
-        // Determine the city for the current day based on the day string
         let cityForDay = '';
         switch (day) {
           case 'Fri 8/29':
@@ -306,7 +311,7 @@
             cityForDay = 'Hakone';
             break;
           case 'Mon 9/8':
-            cityForDay = 'Tokyo'; // Final day back to Tokyo
+            cityForDay = 'Tokyo';
             break;
         }
         
@@ -347,7 +352,6 @@
       });
     };
     
-    // Updated expand/collapse all functions to use direct style manipulation
     expandAllButton.addEventListener('click', () => {
       document.querySelectorAll('.itinerary-content').forEach(content => {
         content.style.display = 'flex';
@@ -362,7 +366,6 @@
       });
     });
     
-    // Add event listeners for filter buttons
     showAllButton.addEventListener('click', () => {
       document.querySelectorAll('.day-section').forEach(section => {
         section.style.display = '';
