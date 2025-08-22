@@ -13,7 +13,25 @@
     body {
       font-family: 'Inter', sans-serif;
       background-color: #F8F9FA;
+      /* Using CSS Grid for a robust two-column layout on larger screens */
+      display: grid;
+      grid-template-columns: 1fr; /* Default to a single column for mobile */
+      gap: 1.5rem; /* Equivalent to p-6 */
     }
+    
+    /* Apply grid layout for larger screens (md breakpoint and up) */
+    @media (min-width: 768px) {
+      body {
+        grid-template-columns: 18rem 1fr; /* Set a fixed width for the sidebar on desktop */
+        padding: 1.5rem; /* Add padding for desktop view */
+      }
+      aside {
+        position: sticky; /* Keep the sticky behavior on desktop */
+        top: 1.5rem;
+        align-self: start; /* Align to the start of the grid row */
+      }
+    }
+
     h1, h2 {
       font-family: 'Merriweather', serif;
     }
@@ -40,9 +58,9 @@
     }
   </style>
 </head>
-<body class="p-4 antialiased flex flex-col md:flex-row items-start">
+<body>
   <!-- Side Navigation Bar -->
-  <aside class="w-full md:w-64 bg-white rounded-xl p-6 mb-6 md:mb-0 md:mr-6 sticky top-4">
+  <aside class="w-full bg-white rounded-xl p-6 mb-6 md:mb-0 md:mr-6">
     <h3 class="text-xl font-bold mb-4 text-gray-800">Itinerary Actions</h3>
     <div class="flex flex-col space-y-2 mb-6">
       <button id="expandAll" class="w-full bg-blue-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
@@ -63,7 +81,7 @@
   </aside>
 
   <!-- Main Content Container -->
-  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden flex-grow">
+  <div class="w-full max-w-7xl bg-white rounded-xl overflow-hidden">
     <!-- Header -->
     <header class="bg-indigo-950 text-white py-8 px-6 relative">
       <div class="relative z-10 text-center">
